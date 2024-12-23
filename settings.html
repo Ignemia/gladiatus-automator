@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Gladex Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+<h2>Gladex Extension Settings</h2>
+<form id="settingsForm">
+    <!-- Auto Settings Section -->
+    <div class="section">
+        <div class="form-group">
+            <label for="autoExpedition">
+                <input type="checkbox" id="autoExpedition" />
+                Auto Expedition
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="autoDungeon">
+                <input type="checkbox" id="autoDungeon" />
+                Auto Dungeon
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="autoHeal">
+                <input type="checkbox" id="autoHeal" />
+                Auto Heal
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="autoTurma">
+                <input type="checkbox" id="autoTurma" />
+                Auto Turma
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="dungeonBossFight">
+                <input type="checkbox" id="dungeonBossFight" />
+                Dungeon Boss Fight
+            </label>
+        </div>
+    </div>
+
+    <!-- Expedition Settings Section -->
+    <div class="section">
+        <div class="form-group horizontal">
+            <label for="expeditionLocation">Expedition Location</label>
+            <select id="expeditionLocation"></select>
+        </div>
+        <div class="form-group horizontal">
+            <label for="expeditionLevel">Expedition Level</label>
+            <input type="number" id="expeditionLevel" min="0" max="100" />
+        </div>
+    </div>
+
+    <!-- Dungeon Settings Section -->
+    <div class="section">
+        <div class="form-group horizontal">
+            <label for="dungeonLevel">Dungeon Level</label>
+            <select id="dungeonLevel"></select>
+        </div>
+        <div class="form-group horizontal">
+            <label for="dungeonStrategy">Dungeon Strategy</label>
+            <select id="dungeonStrategy">
+                <option value="0">SLOW</option>
+                <option value="1">FAST</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Health Settings Section -->
+    <div class="section">
+        <div class="form-group horizontal">
+            <label for="minHP">Min HP (Fraction)</label>
+            <input type="number" step="0.01" id="minHP" min="0" max="1" />
+        </div>
+    </div>
+
+    <button type="button" class="save-button" id="saveBtn">Save Settings</button>
+</form>
+
+<script src="settings.js"></script>
+</body>
+</html>
