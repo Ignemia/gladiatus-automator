@@ -1,3 +1,4 @@
+/* settings.css */
 /* General Styles */
 body {
     font-family: Arial, sans-serif;
@@ -93,4 +94,31 @@ select:focus {
 
 .save-button:hover {
     background-color: #45a049;
+}
+
+/* Turma Attack History Table Styles */
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.history-table th,
+.history-table td {
+    border: 1px solid #555;
+    padding: 8px;
+    text-align: left;
+}
+
+.history-table th {
+    background-color: #444;
+    color: #fff;
+}
+
+.history-table tr:nth-child(even) {
+    background-color: #3c3c3c;
+}
+
+.history-table tr:hover {
+    background-color: #555;
 }

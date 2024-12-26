@@ -1,149 +1,354 @@
-// Corresponds to the same default_settings in your main extension code
-const default_settings = {
-    autoExpedition: true,
-    autoDungeon: true,
-    autoHeal: true,
-    autoTurma: false,
-    expeditionLocation: 3, // WOLF_CAVE by default
-    expeditionLevel: 2,
-    dungeonLevel: 2, // Assuming dungeonLevel corresponds to locId
-    minHP: 0.25,
-    dungeonStrategy: 0, // SLOW
-    dungeonBossFight: false
-};
+// settings.js
 
-// Selectors for form elements
-const formElems = {
-    autoExpedition: document.getElementById('autoExpedition'),
-    autoDungeon: document.getElementById('autoDungeon'),
-    autoHeal: document.getElementById('autoHeal'),
-    autoTurma: document.getElementById('autoTurma'),
-    expeditionLocation: document.getElementById('expeditionLocation'),
-    expeditionLevel: document.getElementById('expeditionLevel'),
-    dungeonLevel: document.getElementById('dungeonLevel'),
-    minHP: document.getElementById('minHP'),
-    dungeonStrategy: document.getElementById('dungeonStrategy'),
-    dungeonBossFight: document.getElementById('dungeonBossFight'),
-    saveBtn: document.getElementById('saveBtn')
-};
+/**
+ * @file settings.js
+ * @description
+ * This script manages the Gladex Chrome Extension's settings page. It handles loading and saving user
+ * preferences, populating form fields with stored settings, and displaying the `turmaAttackHistory` data.
+ * The `turmaAttackHistory` provides insights into past attacks, including win rates and gold earned, enhancing
+ * the user's decision-making process within the extension.
+ *
+ * @requires jQuery
+ * @requires Chrome Extension APIs (`chrome.storage.local`)
+ */
 
-// Load on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', async () => {
-    const [savedSettings, locations] = await Promise.all([
-        loadSettingsFromStorage(),
-        loadLocationsFromStorage()
-    ]);
-
-    populateForm(savedSettings);
-    populateSelectElements(locations);
-
-    // Listen for Save button click
-    formElems.saveBtn.addEventListener('click', onSaveSettings);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSettingsPage();
 });
 
 /**
- * Fetch saved settings from chrome.storage.local
+ * Initializes the settings page by loading settings, locations, and turma attack history.
+ * It populates the form fields and displays the turma history in the designated section.
  */
-async function loadSettingsFromStorage() {
+async function initializeSettingsPage() {
+    try {
+        const [savedSettings, locations, turmaHistory] = await Promise.all([
+            loadSettingsFromStorage(),
+            loadLocationsFromStorage(),
+            loadTurmaAttackHistory()
+        ]);
+
+        populateForm(savedSettings);
+        populateSelectElements(locations);
+        displayTurmaAttackHistory(turmaHistory);
+
+        // Attach event listener to the Save button
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', onSaveSettings);
+        } else {
+            console.error('Save button with id "saveBtn" not found.');
+        }
+    } catch (error) {
+        console.error('Error initializing settings page:', error);
+    }
+}
+
+/**
+ * Loads the user settings from Chrome's local storage.
+ * If no settings are found, returns the default settings.
+ *
+ * @returns {Promise<Object>} A promise that resolves to the saved settings object.
+ */
+function loadSettingsFromStorage() {
+    const defaultSettings = {
+        autoExpedition: true,
+        autoDungeon: true,
+        autoHeal: true,
+        autoTurma: false,
+        expeditionLocation: 3, // Example default value
+        expeditionLevel: 2,
+        dungeonLevel: 2, // Assuming dungeonLevel corresponds to locId
+        minHP: 0.25,
+        dungeonStrategy: 0, // 0: SLOW, 1: FAST
+        dungeonBossFight: false
+    };
+
     return new Promise((resolve) => {
         chrome.storage.local.get('gladex_settings', (data) => {
-            if (data.gladex_settings) {
-                resolve(data.gladex_settings);
-            } else {
-                resolve({}); // No settings yet
+            if (chrome.runtime.lastError) {
+                console.error('Error fetching settings:', chrome.runtime.lastError);
+                resolve(defaultSettings);
+                return;
             }
+            const savedSettings = data.gladex_settings || {};
+            // Merge saved settings with default settings
+            const finalSettings = { ...defaultSettings, ...savedSettings };
+            resolve(finalSettings);
         });
     });
 }
 
 /**
- * Fetch parsed locations from chrome.storage.local
+ * Loads the available expedition and dungeon locations from Chrome's local storage.
+ *
+ * @returns {Promise<Array>} A promise that resolves to an array of location objects.
+ * Each location object should have `name` and `locId` properties.
  */
-async function loadLocationsFromStorage() {
+function loadLocationsFromStorage() {
     return new Promise((resolve) => {
         chrome.storage.local.get('locations', (data) => {
-            if (data.locations && Array.isArray(data.locations)) {
-                resolve(data.locations);
-            } else {
-                resolve([]); // No locations found
+            if (chrome.runtime.lastError) {
+                console.error('Error fetching locations:', chrome.runtime.lastError);
+                resolve([]);
+                return;
             }
+            const locations = data.locations && Array.isArray(data.locations) ? data.locations : [];
+            resolve(locations);
         });
     });
 }
 
 /**
- * Fill the form fields with either stored settings or defaults.
+ * Loads the `turmaAttackHistory` from Chrome's local storage.
+ *
+ * @returns {Promise<Object>} A promise that resolves to the `turmaAttackHistory` object.
  */
-function populateForm(stored) {
-    const finalSettings = { ...default_settings, ...stored };
-
-    // Checkboxes
-    formElems.autoExpedition.checked = finalSettings.autoExpedition;
-    formElems.autoDungeon.checked = finalSettings.autoDungeon;
-    formElems.autoHeal.checked = finalSettings.autoHeal;
-    formElems.autoTurma.checked = finalSettings.autoTurma;
-    formElems.dungeonBossFight.checked = finalSettings.dungeonBossFight;
-
-    // Selects & Numbers
-    formElems.expeditionLocation.value = finalSettings.expeditionLocation;
-    formElems.expeditionLevel.value = finalSettings.expeditionLevel;
-    formElems.dungeonLevel.value = finalSettings.dungeonLevel;
-    formElems.minHP.value = finalSettings.minHP;
-    formElems.dungeonStrategy.value = finalSettings.dungeonStrategy;
+function loadTurmaAttackHistory() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get('gladex_turma_history', (data) => {
+            if (chrome.runtime.lastError) {
+                console.error('Error fetching turma attack history:', chrome.runtime.lastError);
+                resolve({});
+                return;
+            }
+            const turmaAttackHistory = data.gladex_turma_history || {};
+            resolve(turmaAttackHistory);
+        });
+    });
 }
 
 /**
- * Populate the expeditionLocation and dungeonLevel select elements with parsed locations.
+ * Populates the settings form with the provided settings.
+ *
+ * @param {Object} settings - The settings object containing user preferences.
+ */
+function populateForm(settings) {
+    const formElems = {
+        autoExpedition: document.getElementById('autoExpedition'),
+        autoDungeon: document.getElementById('autoDungeon'),
+        autoHeal: document.getElementById('autoHeal'),
+        autoTurma: document.getElementById('autoTurma'),
+        expeditionLocation: document.getElementById('expeditionLocation'),
+        expeditionLevel: document.getElementById('expeditionLevel'),
+        dungeonLevel: document.getElementById('dungeonLevel'),
+        minHP: document.getElementById('minHP'),
+        dungeonStrategy: document.getElementById('dungeonStrategy'),
+        dungeonBossFight: document.getElementById('dungeonBossFight')
+    };
+
+    // Validate and set checkbox states
+    ['autoExpedition', 'autoDungeon', 'autoHeal', 'autoTurma', 'dungeonBossFight'].forEach(id => {
+        if (formElems[id]) {
+            formElems[id].checked = Boolean(settings[id]);
+        } else {
+            console.warn(`Form element with id "${id}" not found.`);
+        }
+    });
+
+    // Validate and set select and input values
+    ['expeditionLocation', 'expeditionLevel', 'dungeonLevel', 'minHP', 'dungeonStrategy'].forEach(id => {
+        if (formElems[id]) {
+            formElems[id].value = settings[id];
+        } else {
+            console.warn(`Form element with id "${id}" not found.`);
+        }
+    });
+}
+
+/**
+ * Populates the expeditionLocation and dungeonLevel select elements with the provided locations.
+ *
+ * @param {Array} locations - An array of location objects with `name` and `locId` properties.
  */
 function populateSelectElements(locations) {
-    if (!locations.length) {
-        const option = document.createElement('option');
-        option.value = "";
-        option.textContent = "No locations available";
-        option.disabled = true;
-        formElems.expeditionLocation.appendChild(option.cloneNode(true));
-        formElems.dungeonLevel.appendChild(option.cloneNode(true));
+    const formElems = {
+        expeditionLocation: document.getElementById('expeditionLocation'),
+        dungeonLevel: document.getElementById('dungeonLevel')
+    };
+
+    ['expeditionLocation', 'dungeonLevel'].forEach(id => {
+        const selectElem = formElems[id];
+        if (!selectElem) {
+            console.warn(`Select element with id "${id}" not found.`);
+            return;
+        }
+
+        // Clear existing options
+        selectElem.innerHTML = '';
+
+        if (locations.length === 0) {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = "No locations available";
+            option.disabled = true;
+            option.selected = true;
+            selectElem.appendChild(option);
+            return;
+        }
+
+        // Populate with locations
+        locations.forEach(({ name, locId }) => {
+            const option = document.createElement('option');
+            option.value = locId;
+            option.textContent = name;
+            selectElem.appendChild(option);
+        });
+    });
+}
+
+/**
+ * Displays the `turmaAttackHistory` in a formatted table within the settings page.
+ *
+ * @param {Object} turmaHistory - The `turmaAttackHistory` object containing attack records.
+ */
+function displayTurmaAttackHistory(turmaHistory) {
+    const historyContainer = document.getElementById('turmaHistory');
+
+    if (!historyContainer) {
+        console.warn('History container with id "turmaHistory" not found in settings.html.');
         return;
     }
 
-    locations.forEach(({ name, locId }) => {
-        const optionExpedition = document.createElement('option');
-        optionExpedition.value = locId;
-        optionExpedition.textContent = name;
-        formElems.expeditionLocation.appendChild(optionExpedition);
+    // Clear existing content
+    historyContainer.innerHTML = '';
 
-        const optionDungeon = document.createElement('option');
-        optionDungeon.value = locId;
-        optionDungeon.textContent = name;
-        formElems.dungeonLevel.appendChild(optionDungeon);
+    const opponents = Object.keys(turmaHistory);
+    if (opponents.length === 0) {
+        historyContainer.textContent = 'No attack history available.';
+        return;
+    }
+
+    // Create table
+    const table = document.createElement('table');
+    table.classList.add('history-table');
+
+    // Create table header
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    const headers = ['Opponent Name', 'Wins', 'Losses', 'Draws', 'Win Rate (%)', 'Total Gold Won'];
+    headers.forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        headerRow.appendChild(th);
     });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Create table body
+    const tbody = document.createElement('tbody');
+
+    opponents.forEach(name => {
+        const record = turmaHistory[name];
+        const row = createHistoryRow(name, record);
+        tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    historyContainer.appendChild(table);
 }
 
 /**
- * Called when user clicks "Save" – gather all form inputs and store them.
+ * Creates a table row for a single opponent's attack history.
+ *
+ * @param {string} name - The opponent's name.
+ * @param {Object} record - The attack history record for the opponent.
+ * @returns {HTMLTableRowElement} The table row element representing the opponent's data.
+ */
+function createHistoryRow(name, record) {
+    const totalAttacks = record.attackCount || 0;
+    const winRate = totalAttacks > 0 ? ((record.wins / totalAttacks) * 100).toFixed(2) : '0.00';
+    const totalGoldWon = record.goldWon || 0;
+
+    const row = document.createElement('tr');
+
+    const nameCell = document.createElement('td');
+    nameCell.textContent = name;
+    row.appendChild(nameCell);
+
+    const winsCell = document.createElement('td');
+    winsCell.textContent = record.wins || 0;
+    row.appendChild(winsCell);
+
+    const lossesCell = document.createElement('td');
+    lossesCell.textContent = record.losses || 0;
+    row.appendChild(lossesCell);
+
+    const drawsCell = document.createElement('td');
+    drawsCell.textContent = record.draws || 0;
+    row.appendChild(drawsCell);
+
+    const winRateCell = document.createElement('td');
+    winRateCell.textContent = winRate;
+    row.appendChild(winRateCell);
+
+    const goldWonCell = document.createElement('td');
+    goldWonCell.textContent = totalGoldWon;
+    row.appendChild(goldWonCell);
+
+    return row;
+}
+
+/**
+ * Handles the Save Settings button click event.
+ * It gathers all form inputs, validates them, and saves the settings to Chrome's local storage.
+ *
+ * After saving, it logs the saved settings and optionally closes the settings window.
  */
 function onSaveSettings() {
+    const formElems = {
+        autoExpedition: document.getElementById('autoExpedition'),
+        autoDungeon: document.getElementById('autoDungeon'),
+        autoHeal: document.getElementById('autoHeal'),
+        autoTurma: document.getElementById('autoTurma'),
+        expeditionLocation: document.getElementById('expeditionLocation'),
+        expeditionLevel: document.getElementById('expeditionLevel'),
+        dungeonLevel: document.getElementById('dungeonLevel'),
+        minHP: document.getElementById('minHP'),
+        dungeonStrategy: document.getElementById('dungeonStrategy'),
+        dungeonBossFight: document.getElementById('dungeonBossFight')
+    };
+
+    // Validate form elements
+    if (!Object.values(formElems).every(elem => elem !== null)) {
+        console.error('One or more form elements are missing.');
+        return;
+    }
+
+    // Gather settings
     const newSettings = {
         autoExpedition: formElems.autoExpedition.checked,
         autoDungeon: formElems.autoDungeon.checked,
         autoHeal: formElems.autoHeal.checked,
         autoTurma: formElems.autoTurma.checked,
         expeditionLocation: parseValue(formElems.expeditionLocation.value),
-        expeditionLevel: parseValue(formElems.expeditionLevel.value),
-        dungeonLevel: parseValue(formElems.dungeonLevel.value),
-        minHP: parseFloat(formElems.minHP.value),
-        dungeonStrategy: parseValue(formElems.dungeonStrategy.value),
+        expeditionLevel: parseInt(formElems.expeditionLevel.value, 10) || 0,
+        dungeonLevel: parseInt(formElems.dungeonLevel.value, 10) || 0,
+        minHP: parseFloat(formElems.minHP.value) || 0,
+        dungeonStrategy: parseInt(formElems.dungeonStrategy.value, 10) || 0,
         dungeonBossFight: formElems.dungeonBossFight.checked
     };
 
+    // Save settings to storage
     chrome.storage.local.set({ gladex_settings: newSettings }, () => {
-        console.log('Settings saved:', newSettings);
-        window.close(); // Optionally close popup after saving
+        if (chrome.runtime.lastError) {
+            console.error('Error saving settings:', chrome.runtime.lastError);
+            alert('Failed to save settings. Please try again.');
+            return;
+        }
+        console.log('Settings saved successfully:', newSettings);
+        alert('Settings have been saved successfully.');
+        // Optionally, close the settings window
+        // window.close();
     });
 }
 
 /**
- * Small helper to parse integer and float values from string inputs.
+ * Parses a string value to an integer or float if applicable.
+ *
+ * @param {string} val - The string value to parse.
+ * @returns {number|string} The parsed number or the original string if parsing is not possible.
  */
 function parseValue(val) {
     if (/^\d+$/.test(val)) {
@@ -152,5 +357,5 @@ function parseValue(val) {
     if (/^\d+\.\d+$/.test(val)) {
         return parseFloat(val);
     }
-    return val; // e.g., 'tundra'
+    return val; // Return as-is if not a number
 }

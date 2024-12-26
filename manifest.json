@@ -14,9 +14,24 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["thirdparty/jquery.js", "content.js"],
-      "run_at": "document_end"
+      "matches": ["*://*.gladiatus.gameforge.com/*"],
+      "css": ["content.css"],
+      "js": [
+        "thirdparty/jquery.js",
+        "constants.js",
+        "storage.js",
+        "parser-turma.js",
+        "parser-report-type.js",
+        "cooldowns.js",
+        "dungeon-logic.js",
+        "turma-attack.js",
+        "healing.js",
+        "cta-observer.js",
+        "locations.js",
+        "navigation.js",
+        "main-logic.js"
+      ],
+      "run_at": "document_idle"
     }
   ]
 }
