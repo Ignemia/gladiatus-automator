@@ -40,7 +40,7 @@ window.parseTurmaReport = function () {
      * @param {string} message - The warning message to log.
      */
     function logWarning(message) {
-        console.warn(`Warning: ${message}`);
+        console.log(`Warning: ${message}`);
     }
 
     /**

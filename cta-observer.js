@@ -12,7 +12,7 @@
 window.handleCTASelectors = function () {
     // Ensure CTA_SELECTORS is valid
     if (typeof window.CTA_SELECTORS !== "object") {
-        console.warn("CTA_SELECTORS is not defined or not an object.");
+        console.log("CTA_SELECTORS is not defined or not an object.");
         return false;
     }
 
@@ -93,7 +93,7 @@ window.handleMutation = async function (mutation) {
                     window.openTurma();
                 }
             } else {
-                console.warn("Some required functions or settings are missing.");
+                console.log("Some required functions or settings are missing.");
             }
             resolve();
         } catch (err) {
@@ -136,7 +136,7 @@ window.timeObserver = new MutationObserver(window.onMutations);
 window.openTurma = function () {
     // Provide a fallback if createLink or certain objects aren't defined
     if (typeof window.createLink !== "function") {
-        console.warn("createLink is not defined. Cannot open Turma interface.");
+        console.log("createLink is not defined. Cannot open Turma interface.");
         return;
     }
 

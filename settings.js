@@ -142,7 +142,7 @@ function populateForm(settings) {
         if (formElems[id]) {
             formElems[id].checked = Boolean(settings[id]);
         } else {
-            console.warn(`Form element with id "${id}" not found.`);
+            console.log(`Form element with id "${id}" not found.`);
         }
     });
 
@@ -151,7 +151,7 @@ function populateForm(settings) {
         if (formElems[id]) {
             formElems[id].value = settings[id];
         } else {
-            console.warn(`Form element with id "${id}" not found.`);
+            console.log(`Form element with id "${id}" not found.`);
         }
     });
 }
@@ -170,7 +170,7 @@ function populateSelectElements(locations) {
     ['expeditionLocation', 'dungeonLevel'].forEach(id => {
         const selectElem = formElems[id];
         if (!selectElem) {
-            console.warn(`Select element with id "${id}" not found.`);
+            console.log(`Select element with id "${id}" not found.`);
             return;
         }
 
@@ -206,7 +206,7 @@ function displayTurmaAttackHistory(turmaHistory) {
     const historyContainer = document.getElementById('turmaHistory');
 
     if (!historyContainer) {
-        console.warn('History container with id "turmaHistory" not found in settings.html.');
+        console.log('History container with id "turmaHistory" not found in settings.html.');
         return;
     }
 

@@ -10,7 +10,7 @@
 window.parseLocations = function () {
     const $submenu = $("#submenu2");
     if (!$submenu.length) {
-        console.warn("submenu2 not found");
+        console.log("submenu2 not found");
         return;
     }
 
@@ -67,7 +67,7 @@ window.parseLocations = function () {
 window.createLink = function (mode, loc, bonus = null) {
     // Safely reference global objects like SCREEN_MODES
     if (typeof window.SCREEN_MODES !== "object") {
-        console.warn("SCREEN_MODES is not defined; createLink may not behave as expected.");
+        console.log("SCREEN_MODES is not defined; createLink may not behave as expected.");
     }
 
     // Base link: protocol + hostname + path

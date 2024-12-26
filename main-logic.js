@@ -11,7 +11,7 @@
 window.handleExpeditionCase = function () {
     // Check if global settings and required functions are defined
     if (!window.settings || typeof window.getCurrentHP !== "function") {
-        console.warn("Settings or getCurrentHP not available; cannot handle expedition logic.");
+        console.log("Settings or getCurrentHP not available; cannot handle expedition logic.");
         return;
     }
 
@@ -19,7 +19,7 @@ window.handleExpeditionCase = function () {
     if (typeof window.renderExpeditionSelection === "function") {
         window.renderExpeditionSelection();
     } else {
-        console.warn("renderExpeditionSelection function not found.");
+        console.log("renderExpeditionSelection function not found.");
     }
 };
 
@@ -44,7 +44,7 @@ window.handleDungeonCase = function () {
 
     // Ensure the dungeon opponent selection functions exist
     if (typeof window.selectDungeonOpponentSlow !== "function" || typeof window.selectDungeonOpponentFast !== "function") {
-        console.warn("Dungeon opponent selection functions not found.");
+        console.log("Dungeon opponent selection functions not found.");
         return;
     }
 
@@ -62,7 +62,7 @@ window.handleDungeonCase = function () {
         if (typeof window.exitDungeon === "function") {
             window.exitDungeon();
         } else {
-            console.warn("exitDungeon function not found.");
+            console.log("exitDungeon function not found.");
         }
         return;
     }
@@ -78,7 +78,7 @@ window.handleDungeonCase = function () {
  */
 window.handleHomeCase = function () {
     if (!window.settings || typeof window.getCurrentHP !== "function") {
-        console.warn("Settings or getCurrentHP not available; cannot handle home logic.");
+        console.log("Settings or getCurrentHP not available; cannot handle home logic.");
         return;
     }
 
@@ -108,13 +108,13 @@ window.handleHomeCase = function () {
 window.handleTurmaCase = async function () {
     if (!window.settings || !window.settings.autoTurma) return;
     if (typeof window.selectOptimalAttack !== "function") {
-        console.warn("selectOptimalAttack function not found.");
+        console.log("selectOptimalAttack function not found.");
         return;
     }
 
     const $own3 = $("#own3");
     if (!$own3.length) {
-        console.warn("#own3 not found; cannot handle Turma attack.");
+        console.log("#own3 not found; cannot handle Turma attack.");
         return;
     }
 
@@ -137,7 +137,7 @@ window.handleReportCase = function () {
         typeof window.getReportType !== "function" ||
         typeof window.REPORTS_MODES !== "object"
     ) {
-        console.warn("getReportType or REPORTS_MODES not available; cannot handle report logic.");
+        console.log("getReportType or REPORTS_MODES not available; cannot handle report logic.");
         return;
     }
     if (window.getReportType() === window.REPORTS_MODES.TURMA) {
@@ -145,7 +145,7 @@ window.handleReportCase = function () {
             typeof window.parseTurmaReport !== "function" ||
             typeof window.updateTurmaAttackHistory !== "function"
         ) {
-            console.warn("parseTurmaReport or updateTurmaAttackHistory not available.");
+            console.log("parseTurmaReport or updateTurmaAttackHistory not available.");
             return;
         }
         const parsedReport = window.parseTurmaReport();
@@ -160,7 +160,7 @@ window.handleReportCase = function () {
  */
 window.performScreenLogic = function () {
     if (typeof window.SCREEN_MODES !== "object") {
-        console.warn("SCREEN_MODES is not defined; cannot perform screen logic.");
+        console.log("SCREEN_MODES is not defined; cannot perform screen logic.");
         return;
     }
 
@@ -208,20 +208,20 @@ window.initExtension = async function () {
         if (typeof window.loadSettings === "function") {
             loadedSettings = await window.loadSettings();
         } else {
-            console.warn("loadSettings function not found; settings cannot be loaded.");
+            console.log("loadSettings function not found; settings cannot be loaded.");
         }
         if (typeof window.loadTurmaHistory === "function") {
             window.turmaAttackHistory = await window.loadTurmaHistory();
         } else {
-            console.warn("loadTurmaHistory function not found; turma attack history cannot be loaded.");
+            console.log("loadTurmaHistory function not found; turma attack history cannot be loaded.");
         }
     } catch (err) {
-        console.warn("Error loading settings or turma history:", err);
+        console.log("Error loading settings or turma history:", err);
     }
 
     // Merge loaded settings with current global settings
     if (typeof window.settings !== "object" || !window.settings) {
-        console.warn("Global settings object is not available; creating a fallback one.");
+        console.log("Global settings object is not available; creating a fallback one.");
         window.settings = {};
     }
     Object.keys(loadedSettings).forEach((key) => {
@@ -241,7 +241,7 @@ window.initExtension = async function () {
         const hp = window.getCurrentHP();
         console.log(`Current hp is at: ${Math.round(hp * 100)}%`);
     } else {
-        console.warn("getCurrentHP not defined; cannot display current HP.");
+        console.log("getCurrentHP not defined; cannot display current HP.");
     }
 
     // Parse and store location data if parseLocations is available
@@ -271,6 +271,6 @@ window.addEventListener("load", () => {
     if (typeof window.initExtension === "function") {
         window.initExtension();
     } else {
-        console.warn("initExtension is not defined.");
+        console.log("initExtension is not defined.");
     }
 }, false);

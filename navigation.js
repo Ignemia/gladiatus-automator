@@ -9,16 +9,16 @@
  */
 window.openExpeditionTab = function () {
     if (typeof window.settings !== "object" || !window.settings) {
-        console.warn("window.settings is not available. Cannot open expedition tab.");
+        console.log("window.settings is not available. Cannot open expedition tab.");
         return;
     }
     const currentMod = new URLSearchParams(window.location.search).get("mod");
 
-    // Ensure SCREEN_MODES.EXPEDITION is spelled consistently with your constants.js
+    // Ensure SCREEN_MODES.EXPEDITION is spelled correctly
     if (currentMod !== window.SCREEN_MODES.EXPEDITION) {
         // Check if createLink exists
         if (typeof window.createLink !== "function") {
-            console.warn("window.createLink is not defined. Cannot open expedition tab.");
+            console.log("window.createLink is not defined. Cannot open expedition tab.");
             return;
         }
         const expeditionLoc = window.settings.expeditionLocation ?? 0;
@@ -31,14 +31,14 @@ window.openExpeditionTab = function () {
  */
 window.openDungeonTab = function () {
     if (typeof window.settings !== "object" || !window.settings) {
-        console.warn("window.settings is not available. Cannot open dungeon tab.");
+        console.log("window.settings is not available. Cannot open dungeon tab.");
         return;
     }
     const currentMod = new URLSearchParams(window.location.search).get("mod");
 
     if (currentMod !== window.SCREEN_MODES.DUNGEON) {
         if (typeof window.createLink !== "function") {
-            console.warn("window.createLink is not defined. Cannot open dungeon tab.");
+            console.log("window.createLink is not defined. Cannot open dungeon tab.");
             return;
         }
         const dungeonLvl = window.settings.dungeonLevel ?? 1;
@@ -53,7 +53,7 @@ window.openProfile = function () {
     const currentMod = new URLSearchParams(window.location.search).get("mod");
     if (currentMod !== window.SCREEN_MODES.HOME) {
         if (typeof window.createLink !== "function") {
-            console.warn("window.createLink is not defined. Cannot open profile tab.");
+            console.log("window.createLink is not defined. Cannot open profile tab.");
             return;
         }
         window.location.href = window.createLink(window.SCREEN_MODES.HOME, null);
@@ -70,9 +70,9 @@ window.exitDungeon = function () {
         .find((e) => e.value && e.value.toLowerCase() === "cancel dungeon");
 
     if (cancelBtn) {
-        cancelBtn.click();
+        $(cancelBtn).trigger("click");
     } else {
-        console.warn("No 'cancel dungeon' button found.");
+        console.log("No 'cancel dungeon' button found.");
     }
 };
 
@@ -83,7 +83,7 @@ window.attack_target = function () {
     // .expedition-selector:checked => the selected radio
     const $selectedRadio = $(".expedition-selector:checked");
     if (!$selectedRadio.length) {
-        console.warn("No expedition target is selected. Cannot attack.");
+        console.log("No expedition target is selected. Cannot attack.");
         return;
     }
     // The nearest .expedition_box, then find .expedition_button
@@ -93,9 +93,9 @@ window.attack_target = function () {
         .first();
 
     if ($attackButton.length) {
-        $attackButton.click();
+        $attackButton.trigger("click");
     } else {
-        console.warn("No .expedition_button found for the selected expedition target.");
+        console.log("No .expedition_button found for the selected expedition target.");
     }
 };
 
@@ -111,7 +111,7 @@ window.getLocationIdFromRadioBox = function (radioBox) {
         .first();
 
     if (!$button.length) {
-        console.warn("No .expedition_button found in the same .expedition_box. Cannot get location ID.");
+        console.log("No .expedition_button found in the same .expedition_box. Cannot get location ID.");
         return null;
     }
 
@@ -126,11 +126,11 @@ window.getLocationIdFromRadioBox = function (radioBox) {
  */
 window.renderExpeditionSelection = function () {
     if (typeof window.settings !== "object" || !window.settings) {
-        console.warn("window.settings is not available. Cannot render expedition selection.");
+        console.log("window.settings is not available. Cannot render expedition selection.");
         return;
     }
     if (typeof window.update_settings !== "function" || typeof window.parseValue !== "function") {
-        console.warn("Required functions (update_settings, parseValue) are not defined.");
+        console.log("Required functions (update_settings, parseValue) are not defined.");
         return;
     }
 
@@ -166,8 +166,52 @@ window.renderExpeditionSelection = function () {
         if ($picture.length) {
             $picture.append($newElement);
         } else {
-            console.warn("No .expedition_picture element found in .expedition_box:", box);
+            console.log("No .expedition_picture element found in .expedition_box:", box);
         }
         counter++;
     });
+};
+
+/**
+ * Create a link that appends ?sh=<param> and &loc if needed.
+ * @param {string} mode      - e.g. "location" for expedition, "dungeon" for dungeon
+ * @param {number|string} loc - location ID or dungeon level
+ * @param {object|null} bonus - Additional query parameters as key-value pairs
+ * @returns {string} The constructed URL
+ */
+window.createLink = function (mode, loc, bonus = null) {
+    let baseLink = `${window.location.protocol}//${window.location.hostname}/game/index.php?mod=${mode}`;
+
+    if (loc !== null && loc !== undefined) {
+        // Use 'loc' for both Expedition and Dungeon modes
+        if (mode === window.SCREEN_MODES.EXPEDITION || mode === window.SCREEN_MODES.DUNGEON) {
+            baseLink += `&loc=${loc}`;
+        } else {
+            baseLink += `&submod=${loc}`;
+        }
+    }
+
+    if (bonus !== null && bonus !== undefined) {
+        for (const [key, value] of Object.entries(bonus)) {
+            baseLink += `&${key}=${value}`;
+        }
+    }
+
+    const shParam = new URLSearchParams(window.location.search).get("sh");
+    if (shParam) {
+        baseLink += `&sh=${shParam}`;
+    }
+
+    return baseLink;
+};
+
+/**
+ * Parses a string value into an integer/float if possible, otherwise returns as-is.
+ * @param {string} val
+ * @returns {number|string}
+ */
+window.parseValue = function (val) {
+    if (/^\d+$/.test(val)) return parseInt(val, 10);
+    if (/^\d+\.\d+$/.test(val)) return parseFloat(val);
+    return val;
 };

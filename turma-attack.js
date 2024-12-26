@@ -60,7 +60,7 @@ window.selectOptimalAttack = function (topElement) {
             const attackElements = topElement.find(".attack");
 
             if (attackElements.length === 0) {
-                console.warn("No `.attack` elements found within the provided topElement.");
+                console.log("No `.attack` elements found within the provided topElement.");
                 resolve(null);
                 return;
             }
@@ -73,7 +73,7 @@ window.selectOptimalAttack = function (topElement) {
                 const row = attackDiv.closest("tr");
 
                 if (row.length === 0) {
-                    console.warn("`.attack` element is not within a `<tr>` row.");
+                    console.log("`.attack` element is not within a `<tr>` row.");
                     return; // Skip this element
                 }
 
@@ -82,7 +82,7 @@ window.selectOptimalAttack = function (topElement) {
                 const opponentName = nameLink.text().trim();
 
                 if (!opponentName) {
-                    console.warn("Opponent name not found for a `.attack` element.");
+                    console.log("Opponent name not found for a `.attack` element.");
                     return; // Skip this element
                 }
 
@@ -110,7 +110,7 @@ window.selectOptimalAttack = function (topElement) {
             });
 
             if (opponents.length === 0) {
-                console.warn("No opponents with valid names found.");
+                console.log("No opponents with valid names found.");
                 resolve(null);
                 return;
             }
