@@ -133,10 +133,11 @@ window.CTA_SELECTORS = {
         if (h3Filtered.length === 0) return null;
         const nextElem = $(h3Filtered[0]).next();
         if (!nextElem.length) return null;
-        return nextElem.find("button")[0] || null;
+        return nextElem.find("input[type=button]").toArray().filter(e => !e.getAttribute("disabled")).sort((a, b) => a.value.toLowerCase().localeCompare(b.value.toLowerCase()))[0] || null;
     })(),
 
     LEVEL_UP: $("#linknotification").length ? $("#linknotification")[0] : null,
+    CONFIRM_ATTACK: $("#linkbod").length ? $("#linkbod")[0] : null
 };
 
 /**

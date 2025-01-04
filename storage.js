@@ -1,79 +1,120 @@
+/*************************
+ * storage.js
+ *************************/
 /**
  * storage.js
  *
  * Handles reading and writing of data (settings, Turma history) to Chrome storage.
- * Includes robust logging to diagnose any potential issues with storing settings.
+ * Uses a "reports" and "opponents" structure to avoid duplicate data for each fight.
  */
 
 /**
- * Updates the global TurmaAttackHistory object in memory and saves to storage.
+ * Updates the global TurmaAttackHistory object in memory, storing each fight by its unique `reportId`.
  *
  * @function updateTurmaAttackHistory
- * @param {string} opponent - Name of the opponent
- * @param {object} result   - Attack result { state, goldWon, xpGained, ... }
+ * @param {string} reportId     - The unique report ID from the URL (e.g., "1303737").
+ * @param {string} opponent     - The opponent's name.
+ * @param {object} fightData    - Data about the fight: { state, goldWon, xpGained, timestamp, ... }
  */
-window.updateTurmaAttackHistory = function (opponent, result) {
+window.updateTurmaAttackHistory = function (reportId, opponent, fightData) {
     if (!window.turmaAttackHistory || typeof window.turmaAttackHistory !== "object") {
-        console.log("Global turmaAttackHistory object not found. Creating a new one.");
-        window.turmaAttackHistory = {};
-    }
-
-    // If the object for this opponent already exists, update it
-    if (window.turmaAttackHistory[opponent]) {
-        window.turmaAttackHistory[opponent].results.push(result);
-        window.turmaAttackHistory[opponent].attackCount++;
-        if (result.state === "win") {
-            window.turmaAttackHistory[opponent].wins++;
-            // Safely handle goldWon updates in case result.goldWon is missing or not a number
-            const goldDelta = Number(result.goldWon) || 0;
-            window.turmaAttackHistory[opponent].goldWon += goldDelta;
-        } else if (result.state === "loss") {
-            window.turmaAttackHistory[opponent].losses++;
-        } else {
-            window.turmaAttackHistory[opponent].draws++;
-        }
-    } else {
-        // Create a new record if none existed
-        window.turmaAttackHistory[opponent] = {
-            results: [result],
-            wins: result.state === "win" ? 1 : 0,
-            losses: result.state === "loss" ? 1 : 0,
-            draws: result.state === "draw" ? 1 : 0,
-            goldWon: result.state === "win" ? (Number(result.goldWon) || 0) : 0,
-            xpGained: Number(result.xpGained) || 0,
-            attackCount: 1,
+        console.log("Initializing turmaAttackHistory with new structure.");
+        window.turmaAttackHistory = {
+            reports: {},
+            opponents: {}
         };
     }
 
-    // Persist the updated history to Chrome storage
+    // Check if we already have this reportId. If yes, skip re-storing that same data.
+    const alreadyExists = !!window.turmaAttackHistory.reports[reportId];
+    if (!alreadyExists) {
+        window.turmaAttackHistory.reports[reportId] = {
+            // Minimal necessary data for referencing the fight.
+            state: fightData.state,
+            goldWon: Number(fightData.goldWon) || 0,
+            xpGained: Number(fightData.xpGained) || 0,
+            timestamp: fightData.timestamp || new Date().toISOString()
+            // Add other fields if desired (e.g. fameGained, raidedAmount, etc.).
+        };
+        console.log(`Stored new fight data under reportId=${reportId}.`);
+    } else {
+        console.log(`Report ID ${reportId} already in storage; skipping re-save of identical data.`);
+    }
+
+    if (!window.turmaAttackHistory.opponents[opponent]) {
+        window.turmaAttackHistory.opponents[opponent] = {
+            reportIds: [],
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            goldWon: 0,
+            xpGained: 0,
+            attackCount: 0
+        };
+    }
+
+    const oppRecord = window.turmaAttackHistory.opponents[opponent];
+    const alreadyLinked = oppRecord.reportIds.includes(reportId);
+
+    if (!alreadyLinked) {
+        oppRecord.reportIds.push(reportId);
+    }
+
+    // Update aggregated stats only if the report was brand new to the system.
+    if (!alreadyExists) {
+        oppRecord.attackCount++;
+        if (fightData.state === "win") {
+            oppRecord.wins++;
+            oppRecord.goldWon += Number(fightData.goldWon) || 0;
+        } else if (fightData.state === "loss") {
+            oppRecord.losses++;
+        } else {
+            oppRecord.draws++;
+        }
+        oppRecord.xpGained += Number(fightData.xpGained) || 0;
+    }
+
+    storeTurmaHistory();
+};
+
+/**
+ * Persists the global turmaAttackHistory object to Chrome storage.
+ *
+ * @function storeTurmaHistory
+ */
+function storeTurmaHistory() {
+    if (!window.turmaAttackHistory || typeof window.turmaAttackHistory !== "object") {
+        console.warn("No valid turmaAttackHistory to store. Creating a fresh structure.");
+        window.turmaAttackHistory = {reports: {}, opponents: {}};
+    }
     chrome.storage.local.set({ gladex_turma_history: window.turmaAttackHistory }, () => {
         if (chrome.runtime.lastError) {
             console.error("Error storing turmaAttackHistory:", chrome.runtime.lastError);
         } else {
-            console.log("TurmaAttackHistory updated successfully.");
+            console.log("TurmaAttackHistory updated successfully in Chrome storage (report-based).");
         }
     });
-};
+}
 
 /**
  * Loads the Turma history from Chrome storage (if available).
  *
  * @function loadTurmaHistory
- * @returns {Promise<object>} - Resolves with the loaded history object, or {} if not found.
+ * @returns {Promise<object>} Resolves with the loaded history object, or an empty { reports: {}, opponents: {} } if not found.
  */
 window.loadTurmaHistory = function () {
     return new Promise((resolve) => {
         chrome.storage.local.get("gladex_turma_history", (stored) => {
             if (chrome.runtime.lastError) {
                 console.error("Error loading turmaAttackHistory:", chrome.runtime.lastError);
-                return resolve({});
+                return resolve({reports: {}, opponents: {}});
             }
             if (stored && stored.gladex_turma_history) {
                 console.log("TurmaAttackHistory loaded from storage.");
                 resolve(stored.gladex_turma_history);
             } else {
-                console.log("No turmaAttackHistory found in storage. Returning empty {}.");
-                resolve({});
+                console.log("No turmaAttackHistory found; returning empty structure.");
+                resolve({reports: {}, opponents: {}});
             }
         });
     });
@@ -104,8 +145,8 @@ window.storeSettings = function () {
  * Updates a key within the global settings object and persists it to storage.
  *
  * @function update_settings
- * @param {string} key - Setting name
- * @param {*} value    - New setting value
+ * @param {string} key   - Setting name
+ * @param {*}      value - New setting value
  */
 window.update_settings = function (key, value) {
     if (!window.settings || typeof window.settings !== "object") {
@@ -115,14 +156,14 @@ window.update_settings = function (key, value) {
 
     console.log(`Updating setting - ${key}:`, value);
     window.settings[key] = value;
-    window.storeSettings(); // Persist the updated settings
+    window.storeSettings();
 };
 
 /**
  * Loads extension settings from Chrome storage, returning a Promise.
  *
  * @function loadSettings
- * @returns {Promise<object>} - Resolves with loaded settings, or rejects if not found.
+ * @returns {Promise<object>} Resolves with loaded settings, or rejects if not found.
  */
 window.loadSettings = function () {
     return new Promise((resolve, reject) => {

@@ -16,6 +16,7 @@ window.handleCTASelectors = function () {
         return false;
     }
 
+    if (![SCREEN_MODES.ARENA, SCREEN_MODES.HOME, SCREEN_MODES.DUNGEON, SCREEN_MODES.REPORT, SCREEN_MODES.EXPEDITION].includes((new URLSearchParams(window.location.search)).get("mod"))) return true;
     // Loop through the CTA_SELECTORS object
     for (const key in window.CTA_SELECTORS) {
         const selector = window.CTA_SELECTORS[key];

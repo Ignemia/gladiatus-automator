@@ -123,6 +123,11 @@ window.handleTurmaCase = async function () {
         console.log(opponent);
         if (opponent) {
             opponent.click();
+            setTimeout(() => {
+                if (window.CTA_SELECTORS.CONFIRM_ATTACK) {
+                    $(window.CTA_SELECTORS.CONFIRM_ATTACK).click();
+                }
+            }, 1000);
         }
     } catch (err) {
         console.error("Error selecting Turma attack:", err);

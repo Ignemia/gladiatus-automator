@@ -1,33 +1,40 @@
+/*************************
+ * parser-turma.js
+ *************************/
+
+/**
+ * parser-turma.js
+ *
+ * Parses Turma reports from the DOM, extracting the `reportId` from the URL
+ * to store each fight uniquely in turmaAttackHistory.
+ */
+
+/**
+ * Extracts the reportId from the current URL (?reportId=...).
+ * @returns {string|null} The reportId if found, else null.
+ */
+function getTurmaReportId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("reportId");
+}
+
 /**
  * Parses the Turma Circus report from the DOM and extracts relevant information.
  *
  * @function parseTurmaReport
- * @returns {Object|null} An object containing the opponent's name and the result details,
- *                        or null if parsing fails.
+ * @returns {Object|null} An object containing { reportId, opponent, result } or null if parsing fails.
  *
- * @property {string} state - The result state, either "win" or "loss".
- * @property {number} goldWon - The amount of gold won (0 if lost).
- * @property {number} xpGained - The amount of experience points gained (0 if lost).
- * @property {number} fameGained - The amount of fame gained (0 if lost).
- * @property {number} raidedAmount - The number extracted after "has raided:" (0 if not found or if lost).
- * @property {string} timestamp - The ISO timestamp when the report was parsed.
- *
- * @example
- * const report = parseTurmaReport();
- * if (report) {
- *     console.log(report.opponent);        // Defender name
- *     console.log(report.result.state);    // "win" or "loss"
- *     console.log(report.result.goldWon);  // 0 if lost
- *     console.log(report.result.xpGained); // 0 if lost
- *     console.log(report.result.fameGained);// 0 if lost
- *     console.log(report.result.raidedAmount);
- *     console.log(report.result.timestamp);
- * }
+ * result includes:
+ * - state: "win" or "loss"
+ * - goldWon
+ * - xpGained
+ * - fameGained
+ * - raidedAmount
+ * - timestamp
  */
 window.parseTurmaReport = function () {
     /**
      * Logs an error message to the console.
-     *
      * @param {string} message - The error message to log.
      */
     function logError(message) {
@@ -36,18 +43,16 @@ window.parseTurmaReport = function () {
 
     /**
      * Logs a warning message to the console.
-     *
      * @param {string} message - The warning message to log.
      */
     function logWarning(message) {
-        console.log(`Warning: ${message}`);
+        console.warn(`Warning: ${message}`);
     }
 
     /**
-     * Extracts a number from a given text based on a regex pattern.
-     *
-     * @param {string} text - The text to search within.
-     * @param {RegExp} pattern - The regex pattern to apply.
+     * Extracts a number from text based on a regex pattern.
+     * @param {string} text
+     * @param {RegExp} pattern
      * @returns {number} The extracted number, or 0 if not found.
      */
     function extractNumber(text, pattern) {
@@ -55,14 +60,12 @@ window.parseTurmaReport = function () {
         return match && match[1] ? parseInt(match[1], 10) : 0;
     }
 
-    // Select the main content element
     const content = document.querySelector("#content");
     if (!content) {
         logError('Element with id "#content" not found.');
         return null;
     }
 
-    // Extract Winner Information
     const winnerCell = content.querySelector("#reportHeader td:nth-of-type(2)");
     if (!winnerCell) {
         logError("Winner information not found in the report header.");
@@ -77,17 +80,14 @@ window.parseTurmaReport = function () {
         return null;
     }
 
-    // Determine Result State
-    // NOTE: Replace "Ignemia" with the actual in-game player name or read from settings if needed
+    // NOTE: Replace "Ignemia" with the actual in-game player name or fetch from settings
     const currentPlayer = "Ignemia";
     const resultState = winnerName === currentPlayer ? "win" : "loss";
 
-    // Initialize Reward Variables
     let goldWon = 0;
     let xpGained = 0;
     let fameGained = 0;
 
-    // Only extract rewards if the player has won
     if (resultState === "win") {
         const rewardSection = content.querySelector(".report_reward section");
         if (rewardSection) {
@@ -100,7 +100,6 @@ window.parseTurmaReport = function () {
         }
     }
 
-    // Extract Defender Information
     const defenderElement = content.querySelector("#defenderAvatar11 .playername");
     const defenderName = defenderElement ? defenderElement.textContent.trim() : "";
     if (!defenderName) {
@@ -108,7 +107,6 @@ window.parseTurmaReport = function () {
         return null;
     }
 
-    // Extract "has raided" Number (if present anywhere in a <p> inside #content)
     let raidedAmount = 0;
     const raidParagraph = content.querySelector("p");
     if (raidParagraph) {
@@ -121,7 +119,12 @@ window.parseTurmaReport = function () {
         logWarning("<p> element containing 'has raided:' not found.");
     }
 
-    // Compile the Result Object
+    const reportId = getTurmaReportId();
+    if (!reportId) {
+        logError("No reportId found in the URL. Cannot uniquely store this Turma fight.");
+        return null;
+    }
+
     const result = {
         state: resultState,
         goldWon,
@@ -131,16 +134,21 @@ window.parseTurmaReport = function () {
         timestamp: new Date().toISOString(),
     };
 
-    console.log("Parsed Turma Circus report:", { opponent: defenderName, result });
-    return { opponent: defenderName, result };
+    console.log("Parsed Turma Circus report:", {reportId, opponent: defenderName, result});
+    return {reportId, opponent: defenderName, result};
 };
 
 /**
- * Uses jQuery to parse the Turma result screen fields.
- * Updates storage accordingly via updateTurmaAttackHistory.
+ * Uses jQuery to parse the Turma result screen fields (alternative shorter approach).
+ * Extracts `reportId` from the URL and calls updateTurmaAttackHistory appropriately.
  */
 window.parseTurmaResultScreen = function () {
-    // Check for essential DOM elements
+    const reportId = new URLSearchParams(window.location.search).get("reportId");
+    if (!reportId) {
+        console.error("No `reportId` found in the URL; cannot store Turma fight uniquely.");
+        return;
+    }
+
     const $opponentElem = $(".opponent_name");
     const $resultElem = $(".result");
     const $goldElem = $(".gold");
@@ -152,7 +160,6 @@ window.parseTurmaResultScreen = function () {
 
     const opponent = $opponentElem.text().trim();
     const resultText = $resultElem.text().trim().toLowerCase();
-    // If .gold is missing, default to 0
     const goldWon = parseInt($goldElem.text().trim(), 10) || 0;
 
     let state = "draw";
@@ -162,6 +169,10 @@ window.parseTurmaResultScreen = function () {
         state = "loss";
     }
 
-    // Update the global Turma Attack History
-    window.updateTurmaAttackHistory(opponent, { state, goldWon });
+    window.updateTurmaAttackHistory(reportId, opponent, {
+        state,
+        goldWon,
+        timestamp: new Date().toISOString()
+    });
 };
+
