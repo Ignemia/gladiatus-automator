@@ -135,6 +135,41 @@ window.handleTurmaCase = async function () {
 };
 
 /**
+ * If autoArena is on, attempts to select an optimal attack and click it.
+ */
+window.handleArenaCase = async function () {
+    console.log({
+        settings: !window.settings,
+        autoarena: !window.settings.autoArena
+    })
+    if (!window.settings || !window.settings.autoArena) return;
+    if (typeof window.selectOptimalAttack !== "function") {
+        console.log("selectOptimalAttack function not found.");
+        return;
+    }
+
+    const $own2 = $("#own2");
+    if (!$own2.length) {
+        console.log("#own3 not found; cannot handle Arena attack.");
+        return;
+    }
+
+    try {
+        const opponent = await window.selectOptimalAttack($own2);
+        if (opponent) {
+            opponent.click();
+            setTimeout(() => {
+                if (window.CTA_SELECTORS.CONFIRM_ATTACK) {
+                    $(window.CTA_SELECTORS.CONFIRM_ATTACK).click();
+                }
+            }, 1000);
+        }
+    } catch (err) {
+        console.error("Error selecting Arena attack:", err);
+    }
+};
+
+/**
  * Checks if the current report is a Turma report. If so, parse and update the attack history.
  */
 window.handleReportCase = function () {
@@ -188,8 +223,13 @@ window.performScreenLogic = function () {
             const searchParams = new URLSearchParams(window.location.search);
             console.log(searchParams);
             if (
-                typeof window.ARENA_SUBMODES === "object" &&
-                typeof window.PROVINCIARUM_TYPES === "object" &&
+                searchParams.get("submod") === window.ARENA_SUBMODES.PROVINCIARUM &&
+                searchParams.get("aType") === String(window.PROVINCIARUM_TYPES.ARENA)
+            ) {
+                console.log("Handling Arena")
+                window.handleArenaCase();
+            }
+            if (
                 searchParams.get("submod") === window.ARENA_SUBMODES.PROVINCIARUM &&
                 searchParams.get("aType") === String(window.PROVINCIARUM_TYPES.TURMA)
             ) {

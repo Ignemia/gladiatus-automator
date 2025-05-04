@@ -38,6 +38,7 @@ window.default_settings = {
     dungeonStrategy: 0, // 0 => SLOW, 1 => FAST
     dungeonBossFight: false,
     forceReload: false,
+    autoArena: true
 };
 
 /**

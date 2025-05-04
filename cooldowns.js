@@ -77,3 +77,17 @@ window.getTimeToTurma = function () {
     // Fallback to parseTime; if invalid, it returns 0
     return window.parseTime(turmaText);
 };
+/**
+ * Get the time until Arena (Arena Provinciarum) is ready.
+ * @returns {number} 0 if ready, else seconds until available.
+ */
+window.getTimeToArena = function () {
+    // Attempt to read from the #cooldown_bar_text_arena element
+    const arenaText = ($("#cooldown_bar_text_arena").text() || "").trim().toLowerCase();
+    if (arenaText === "go to the arena") {
+        return 0;
+    }
+    // Fallback to parseTime; if invalid, it returns 0
+    return window.parseTime(arenaText);
+};
+

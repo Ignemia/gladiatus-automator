@@ -75,6 +75,7 @@ window.handleMutation = async function (mutation) {
                 typeof window.openDungeonTab === "function" &&
                 typeof window.openProfile === "function" &&
                 typeof window.openTurma === "function" &&
+                typeof window.openArena === "function" &&
                 typeof window.update_settings === "function" &&
                 typeof window.settings === "object"
             ) {
@@ -92,6 +93,9 @@ window.handleMutation = async function (mutation) {
                 }
                 if (window.getTimeToTurma() === 0 && window.settings.autoTurma) {
                     window.openTurma();
+                }
+                if (window.getTimeToArena() === 0 && window.settings.autoArena) {
+                    window.openArena();
                 }
             } else {
                 console.log("Some required functions or settings are missing.");
@@ -149,7 +153,7 @@ window.openTurma = function () {
         query.get("aType") === "3" &&
         query.get("mod") === "arena"
     ) {
-        console.log("Already in Circus Turma or Arena context.");
+        console.log("Already in Circus Turma context.");
         return;
     }
 
@@ -158,5 +162,35 @@ window.openTurma = function () {
         window.SCREEN_MODES.ARENA,
         window.ARENA_SUBMODES.PROVINCIARUM,
         { aType: window.PROVINCIARUM_TYPES.TURMA }
+    );
+};
+
+/**
+ * Stub to open the Arena interface (unimplemented logic).
+ */
+window.openArena = function () {
+    // Provide a fallback if createLink or certain objects aren't defined
+    if (typeof window.createLink !== "function") {
+        console.log("createLink is not defined. Cannot open Arena interface.");
+        return;
+    }
+
+    const query = new URLSearchParams(window.location.search);
+
+    // If we are already in Circus Turma, just log and return
+    if (
+        query.get("submod") === "serverArena" &&
+        query.get("aType") === "2" &&
+        query.get("mod") === "arena"
+    ) {
+        console.log("Already in Arena context.");
+        return;
+    }
+
+    console.log("Opening Arena interface...");
+    window.location.href = window.createLink(
+        window.SCREEN_MODES.ARENA,
+        window.ARENA_SUBMODES.PROVINCIARUM,
+        { aType: window.PROVINCIARUM_TYPES.ARENA }
     );
 };

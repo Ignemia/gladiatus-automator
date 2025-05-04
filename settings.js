@@ -67,12 +67,14 @@ function loadSettingsFromStorage() {
         autoDungeon: true,
         autoHeal: true,
         autoTurma: false,
+        autoArena: true,
         expeditionLocation: 3,
         expeditionLevel: 2,
         dungeonLevel: 2,
         minHP: 0.25,
         dungeonStrategy: 0,
         dungeonBossFight: false
+
     };
 
     return new Promise((resolve) => {
@@ -127,6 +129,19 @@ function loadTurmaAttackHistory() {
     });
 }
 
+function loadArenaAttackHistory() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get("gladex_arena_history", (data) => {
+            if (chrome.runtime.lastError) {
+                console.error("Error fetching arena attack history:", chrome.runtime.lastError);
+                return resolve({reports: {}, opponents: {}});
+            }
+            const history = data.gladex_arena_history || {reports: {}, opponents: {}};
+            resolve(history);
+        });
+    });
+}
+
 /**
  * Populates the settings form with the provided settings object.
  *
@@ -139,6 +154,7 @@ function populateForm(settings) {
         autoDungeon: document.getElementById("autoDungeon"),
         autoHeal: document.getElementById("autoHeal"),
         autoTurma: document.getElementById("autoTurma"),
+        autoArena: document.getElementById("autoArena"),
         expeditionLocation: document.getElementById("expeditionLocation"),
         expeditionLevel: document.getElementById("expeditionLevel"),
         dungeonLevel: document.getElementById("dungeonLevel"),
@@ -148,7 +164,7 @@ function populateForm(settings) {
     };
 
     // Set checkbox states
-    ["autoExpedition", "autoDungeon", "autoHeal", "autoTurma", "dungeonBossFight"].forEach(id => {
+    ["autoExpedition", "autoDungeon", "autoHeal", "autoTurma", "autoArena", "dungeonBossFight"].forEach(id => {
         if (formElems[id]) {
             formElems[id].checked = Boolean(settings[id]);
         }
@@ -312,6 +328,7 @@ function onSaveSettings() {
         autoDungeon: document.getElementById("autoDungeon"),
         autoHeal: document.getElementById("autoHeal"),
         autoTurma: document.getElementById("autoTurma"),
+        autoArena: document.getElementById("autoArena"),
         expeditionLocation: document.getElementById("expeditionLocation"),
         expeditionLevel: document.getElementById("expeditionLevel"),
         dungeonLevel: document.getElementById("dungeonLevel"),
@@ -331,6 +348,7 @@ function onSaveSettings() {
         autoDungeon: formElems.autoDungeon.checked,
         autoHeal: formElems.autoHeal.checked,
         autoTurma: formElems.autoTurma.checked,
+        autoTurma: formElems.autoArena.checked,
         expeditionLocation: parseValue(formElems.expeditionLocation.value),
         expeditionLevel: parseInt(formElems.expeditionLevel.value, 10) || 0,
         dungeonLevel: parseInt(formElems.dungeonLevel.value, 10) || 0,
