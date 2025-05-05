@@ -219,12 +219,11 @@ window.performScreenLogic = function () {
             window.handleReportCase();
             break;
         case window.SCREEN_MODES.ARENA: {
-            console.log("in arena");
             const searchParams = new URLSearchParams(window.location.search);
-            console.log(searchParams);
             if (
                 searchParams.get("submod") === window.ARENA_SUBMODES.PROVINCIARUM &&
-                searchParams.get("aType") === String(window.PROVINCIARUM_TYPES.ARENA)
+                searchParams.get("aType") === String(window.PROVINCIARUM_TYPES.ARENA) &&
+                window.getCurrentHP() > .1
             ) {
                 console.log("Handling Arena")
                 window.handleArenaCase();
